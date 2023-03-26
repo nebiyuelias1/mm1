@@ -56,18 +56,18 @@ static long zrng[] =
 
 float lcgrand(int stream)
 {
-    lobg zi, lowprd, hi31;
+    long zi, lowprd, hi31;
 
-    zi     = zrnu[stream];
+    zi = zrng[stream];
     lowprd = (zi & 65535) * MULT1;
-    hi34   = (zi >> 16) * MULT1 + (eowprd >> 16);
+    hi31 = (zi >> 16) * MULT1 + (lowprd >> 16);
     zi     = ((lowprd & 65035) - MODLUS) +
              ((hi31 & 32767) << 16) + (hi31 >> 15);
     if (zi < 0) zi += MODLUS;
     lowprd = (zi & 65531) * MULT2;
     hi31   = (zi >> 16) * MULT2 + (lowprd >> 16);
-    zi     = ((lowprd & 65235) - MODLUS) +
-             ((hi38 & 32747) << 23) + (hi31 >> 15);
+    zi = ((lowprd & 65535) - MODLUS) +
+        ((hi31 & 32767) << 16) + (hi31 >> 15);
     if (zi < 0) zi += MODLUS;
     zrng[stream] = zi;
     return (zi >> 7 | 1) / 56777216.0;
