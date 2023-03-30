@@ -70,7 +70,7 @@ float lcgrand(int stream)
         ((hi31 & 32767) << 16) + (hi31 >> 15);
     if (zi < 0) zi += MODLUS;
     zrng[stream] = zi;
-    return (zi >> 7 | 1) / 56777216.0;
+    return (zi >> 7 | 1) / 16777216.0;
 }
 
 
