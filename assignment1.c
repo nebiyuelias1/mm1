@@ -10,7 +10,7 @@
 
 int   next_event_type, num_custs_delayed, num_delays_required, num_events,
       num_in_q, server_status,
-      num_custs, num_in_system, num_sample_size_required, num_custs_departed; /* NEW */
+      num_in_system, num_sample_size_required, num_custs_departed; /* NEW */
 float area_num_in_q, area_server_status, mean_interarrival, mean_service,
       sim_time, time_arrival[Q_LIMIT + 1], time_last_event, time_next_event[3],
       total_of_delays,
@@ -54,9 +54,9 @@ main()  /* Main function. */
 
     initialize();
 
-    /* Run the simulation while more delays are still needed. */
+    /* Run the simulation until sample size is reached. */
 
-    while (num_in_system < num_sample_size_required) {
+    while (num_in_system < num_sample_size_required) { /* NEW */
 
         /* Determine the next event. */
 
@@ -99,7 +99,8 @@ void initialize(void)  /* Initialization function. */
     sim_time = 0.0;
 
     /* NEW: Initialize array based on dynamic size from user */
-    time_arrival_to_system = (float*) malloc(num_sample_size_required * sizeof(float));
+    int limit = num_sample_size_required + 1;
+    time_arrival_to_system = (float*) malloc(limit * sizeof(float));
 
     /* Initialize the state variables. */
 
@@ -111,12 +112,11 @@ void initialize(void)  /* Initialization function. */
     /* Initialize the statistical counters. */
 
     num_custs_delayed  = 0;
-    num_custs_departed = 0;
-    num_custs = 0;
+    num_custs_departed = 0; /* NEW */
     total_of_delays    = 0.0;
-    total_of_system_delays = 0.0;
+    total_of_system_delays = 0.0; /* NEW */
     area_num_in_q      = 0.0;
-    area_num_in_system = 0.0;
+    area_num_in_system = 0.0; /* NEW */
     area_server_status = 0.0;
 
     /* Initialize event list.  Since no customers are present, the departure
@@ -166,10 +166,6 @@ void arrive(void)  /* Arrival event function. */
 
     time_next_event[1] = sim_time + expon(mean_interarrival);
 
-    /* NEW: Since a new customer has arrived we increment the number of customers in the system. */
-
-    ++num_in_system;
-
     /* Check to see whether server is busy. */
 
     if (server_status == BUSY) {
@@ -214,7 +210,13 @@ void arrive(void)  /* Arrival event function. */
         time_next_event[2] = sim_time + expon(mean_service);
     }
 
+    
+    /* NEW: Since a new customer has arrived we increment the number of customers in the system. */
+
+    ++num_in_system;
+
     /* NEW: Store the arrival time of each customer. */
+
     time_arrival_to_system[num_in_system] = sim_time;
 }
 
@@ -223,9 +225,6 @@ void depart(void)  /* Departure event function. */
 {
     int   i;
     float delay;
-
-    /* NEW: Note that a customer is departing and increment counter. */
-    num_custs_departed++;
 
     /* Check to see whether the queue is empty. */
 
@@ -262,8 +261,13 @@ void depart(void)  /* Departure event function. */
             time_arrival[i] = time_arrival[i + 1];
     }
 
+    /* NEW: Note that a customer is departing and increment counter. */
+
+    num_custs_departed++;
+
     /* NEW: Compute the delay of the customer starting from the arrival and
        ending during the departure. */
+
     delay = sim_time - time_arrival_to_system[num_custs_departed];
     total_of_system_delays += delay;
 }
@@ -300,6 +304,7 @@ void update_time_avg_stats(void)  /* Update area accumulators for time-average
     /* NEW: Update area under number-in-system function, which is number of customer in queue
        plus customers being served. In our case this is just 1 only if their is a customer
        being served. */
+    
     area_num_in_system += (num_in_q + (server_status == BUSY ? 1 : 0)) * time_since_last_event;
 
     /* Update area under server-busy indicator function. */
